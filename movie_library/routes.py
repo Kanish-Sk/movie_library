@@ -23,6 +23,7 @@ def login_required(route):
 
     return route_wrapper
 
+
 @pages.route("/")
 @login_required
 def index():
@@ -30,11 +31,11 @@ def index():
     user = User(**user_data)
 
     movie_data = current_app.db.movie.find({"_id": {"$in": user.movies}})
-    movies = [Movie(**movie) for movie in movie_data ]
+    movies = [Movie(**movie) for movie in movie_data]
     return render_template(
         "index.html",
         title="Movies Watchlist",
-        movies_data = movies
+        movies_data=movies
     )
 
 
@@ -62,6 +63,7 @@ def register():
         "register.html", title="Movies Watchlist - Register", form=form
     )
 
+
 @pages.route("/login", methods=["GET", "POST"])
 def login():
     if session.get("email"):
@@ -86,6 +88,7 @@ def login():
 
     return render_template("login.html", title="Movies Watchlist - Login", form=form)
 
+
 @pages.route("/logout")
 def logout():
     current_theme = session.get("theme")
@@ -93,6 +96,7 @@ def logout():
     session["theme"] = current_theme
 
     return redirect(url_for(".login"))
+
 
 @pages.route("/add", methods=['GET', 'POST'])
 @login_required
@@ -108,16 +112,17 @@ def add_movies():
         )
         current_app.db.movie.insert_one(asdict(movie))
         current_app.db.user.update_one(
-    {"_id": session["user_id"]}, {"$push": {"movies": movie._id}}
-)
+            {"_id": session["user_id"]}, {"$push": {"movies": movie._id}}
+        )
 
         return redirect(url_for(".index"))
 
     return render_template(
-        "new_movie.html", 
-        title="Movies Watchlist - Add Movie", 
+        "new_movie.html",
+        title="Movies Watchlist - Add Movie",
         form=form
-        )
+    )
+
 
 @pages.get("/movie/<string:_id>")
 def movie(_id: str):
@@ -125,29 +130,23 @@ def movie(_id: str):
     movie = Movie(**movie_data)
     return render_template("movie_details.html", movie=movie)
 
+
 @pages.get("/movie/<string:_id>/rate/<int:rating>")
 @login_required
-def rate_movie(_id, rating:int):
+def rate_movie(_id, rating: int):
     current_app.db.movie.update_one({"_id": _id}, {"$set": {"rating": rating}})
 
     return redirect(url_for(".movie", _id=_id))
 
 
-# instead of the above method we can acess it with query string
-# /movie/ewfih3283/rate?rating=3
-# @pages.get("/movie/<string:_id>/rate")
-# def rate_movie(_id):
-#     rating = int(request.args.get("rating"))
-#     current_app.db.movie.update_one({"_id": _id}, {"$set": {"rating": rating}})
-
-#     return redirect(url_for(".movie", _id=_id))
-
 @pages.get("/movie/<string:_id>/watch")
 @login_required
 def watch_today(_id):
-    current_app.db.movie.update_one({"_id": _id}, {"$set": {"last_watched": datetime.datetime.today()}})
+    current_app.db.movie.update_one(
+        {"_id": _id}, {"$set": {"last_watched": datetime.datetime.today()}})
 
     return redirect(url_for(".movie", _id=_id))
+
 
 @pages.route("/edit/<string:_id>", methods=["GET", "POST"])
 @login_required
@@ -164,9 +163,11 @@ def edit_movie(_id: str):
         movie.description = form.description.data
         movie.video_link = form.video_link.data
 
-        current_app.db.movie.update_one({"_id": movie._id}, {"$set": asdict(movie)})
+        current_app.db.movie.update_one(
+            {"_id": movie._id}, {"$set": asdict(movie)})
         return redirect(url_for(".movie", _id=movie._id))
     return render_template("movie_form.html", movie=movie, form=form)
+
 
 @pages.route("/toogle-theme")
 def toogle_theme():
